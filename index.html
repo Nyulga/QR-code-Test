@@ -1,26 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fiche produit QR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 520px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1f2937;
+    }
+
+    .line {
+      margin: 14px 0;
+      font-size: 16px;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #374151;
+    }
+
+    .value {
+      color: #111827;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+
+    .loading {
+      color: #6b7280;
+    }
+
+    .button {
+      display: block;
+      margin-top: 24px;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
 <body>
+  <div class="card">
+    <h1>Fiche produit</h1>
+    <div id="content" class="loading">Chargement des informations...</div>
+  </div>
 
-<h2>Test QR Code</h2>
-<div id="data">Chargement...</div>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyzCSVOFQTr8Bs_xwRhV4495Y43zo8lBfd6GG9Bj4sJsQy8s3Qhhl9H7knku0amW6o5/exec";
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const sn = urlParams.get("sn");
+    const params = new URLSearchParams(window.location.search);
+    const serial = params.get("sn");
+    const content = document.getElementById("content");
 
-fetch("https://script.google.com/macros/s/AKfycbx0G2frOEmFaPusSO87PccDmjJ2lqBQa4dcQE2fcBmOzya5P1WkLnpdzthUfqwvu4ft/exec" + sn)
-.then(res => res.json())
-.then(data => {
-  if(data.error){
-    document.getElementById("data").innerHTML = "Produit introuvable";
-  } else {
-    document.getElementById("data").innerHTML =
-      "Produit: " + data.produit + "<br>" +
-      "Statut: " + data.statut;
-  }
-});
-</script>
+    if (!serial) {
+      content.innerHTML = '<p class="error">Aucun numéro de série fourni.</p>';
+    } else {
+      fetch(`${API_URL}?sn=${encodeURIComponent(serial)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            content.innerHTML = `
+              <p class="error">Produit introuvable.</p>
+              <p>Numéro recherché : ${serial}</p>
+            `;
+            return;
+          }
 
+          content.innerHTML = `
+            <div class="line"><span class="label">Numéro de série :</span> <span class="value">${data.serial || ""}</span></div>
+            <div class="line"><span class="label">Produit :</span> <span class="value">${data.produit || ""}</span></div>
+            <div class="line"><span class="label">Statut :</span> <span class="value">${data.statut || ""}</span></div>
+            <div class="line"><span class="label">Client :</span> <span class="value">${data.client || ""}</span></div>
+            <div class="line"><span class="label">Date fabrication :</span> <span class="value">${formatDate(data.date_fab)}</span></div>
+            <div class="line"><span class="label">Commentaire :</span> <span class="value">${data.commentaire || ""}</span></div>
+
+            <a class="button" href="mailto:sav@tonentreprise.fr?subject=Demande SAV ${data.serial || serial}">
+              Faire une demande SAV
+            </a>
+          `;
+        })
+        .catch(error => {
+          content.innerHTML = '<p class="error">Erreur de chargement des données.</p>';
+          console.error(error);
+        });
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (isNaN(date)) return value;
+      return date.toLocaleDateString("fr-FR");
+    }
+  </script>
 </body>
 </html>
