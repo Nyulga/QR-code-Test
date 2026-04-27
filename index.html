@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Test QR Code</h2>
+<div id="data">Chargement...</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const sn = urlParams.get("sn");
+
+fetch("https://script.google.com/macros/s/AKfycbx0G2frOEmFaPusSO87PccDmjJ2lqBQa4dcQE2fcBmOzya5P1WkLnpdzthUfqwvu4ft/exec" + sn)
+.then(res => res.json())
+.then(data => {
+  if(data.error){
+    document.getElementById("data").innerHTML = "Produit introuvable";
+  } else {
+    document.getElementById("data").innerHTML =
+      "Produit: " + data.produit + "<br>" +
+      "Statut: " + data.statut;
+  }
+});
+</script>
+
+</body>
+</html>
